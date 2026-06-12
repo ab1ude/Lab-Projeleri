@@ -1,0 +1,130 @@
+CREATE DATABASE IF NOT EXISTS netflixdb;
+USE netflixdb;
+
+CREATE TABLE IF NOT EXISTS Rol (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ad VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS Kullanici (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ad VARCHAR(50) NOT NULL,
+    soyad VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    sifre VARCHAR(255) NOT NULL,
+    dogum_tarihi DATE NOT NULL,
+    cinsiyet VARCHAR(10),
+    ulke VARCHAR(50),
+    rol_id INT,
+    aktif_mi BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (rol_id) REFERENCES Rol(id)
+);
+
+CREATE TABLE IF NOT EXISTS Program (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ad VARCHAR(255) NOT NULL,
+    tip VARCHAR(10) NOT NULL,
+    aciklama TEXT,
+    yayin_yili INT,
+    uzunluk INT,
+    bolum_sayisi INT DEFAULT 1,
+    ortalama_puan FLOAT DEFAULT 0.0,
+    izlenme_sayisi INT DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS Tur (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ad VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS ProgramTur (
+    program_id INT,
+    tur_id INT,
+    PRIMARY KEY (program_id, tur_id),
+    FOREIGN KEY (program_id) REFERENCES Program(id) ON DELETE CASCADE,
+    FOREIGN KEY (tur_id) REFERENCES Tur(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS KullaniciProgram (
+    kullanici_id INT,
+    program_id INT,
+    verilen_puan INT CHECK (verilen_puan BETWEEN 1 AND 10),
+    PRIMARY KEY (kullanici_id, program_id),
+    FOREIGN KEY (kullanici_id) REFERENCES Kullanici(id) ON DELETE CASCADE,
+    FOREIGN KEY (program_id) REFERENCES Program(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS Favori (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    kullanici_id INT,
+    program_id INT,
+    FOREIGN KEY (kullanici_id) REFERENCES Kullanici(id) ON DELETE CASCADE,
+    FOREIGN KEY (program_id) REFERENCES Program(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS KullaniciTur (
+    kullanici_id INT,
+    tur_id INT,
+    PRIMARY KEY (kullanici_id, tur_id),
+    FOREIGN KEY (kullanici_id) REFERENCES Kullanici(id) ON DELETE CASCADE,
+    FOREIGN KEY (tur_id) REFERENCES Tur(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS OturumLog (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    kullanici_id INT,
+    giris_tarihi DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (kullanici_id) REFERENCES Kullanici(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS IzlemeLog (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    kullanici_id INT,
+    program_id INT,
+    bolum_no INT DEFAULT 1,
+    izleme_tarihi DATETIME DEFAULT CURRENT_TIMESTAMP,
+    izlenen_sure INT DEFAULT 0,
+    tamamlandi_mi BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (kullanici_id) REFERENCES Kullanici(id) ON DELETE CASCADE,
+    FOREIGN KEY (program_id) REFERENCES Program(id) ON DELETE CASCADE
+);
+
+INSERT IGNORE INTO Rol (id, ad) VALUES (1, 'Admin'), (2, 'User');
+
+INSERT IGNORE INTO Kullanici (id, ad, soyad, email, sifre, dogum_tarihi, cinsiyet, ulke, rol_id, aktif_mi) 
+VALUES (1, 'Yönetici', 'Admin', 'admin@netflix.com', '123456', '1990-01-01', 'Erkek', 'Türkiye', 1, TRUE);
+
+INSERT IGNORE INTO Tur (id, ad) VALUES 
+(1, 'Aksiyon ve Macera'), (2, 'Bilim Kurgu ve Fantastik'), (3, 'Romantik'), 
+(4, 'Komedi'), (5, 'Korku'), (6, 'Belgesel'), (7, 'Drama'), (8, 'Anime');
+
+INSERT IGNORE INTO Program (id, ad, tip, aciklama, yayin_yili, uzunluk, bolum_sayisi, ortalama_puan, izlenme_sayisi) VALUES
+(1, 'Breaking Bad', 'Dizi', 'Lisede kimya öğretmeni olan Walter White, ailesine para bırakmak için uyuşturucu üretimine başlar.', 2008, 45, 62, 8.8, 1500),
+(2, 'Başlangıç (Inception)', 'Film', 'Yetenekli bir hırsız, insanların rüyalarına girerek bilinçaltından sırları çalar.', 2010, 148, 1, 8.6, 3200),
+(3, 'Stranger Things', 'Dizi', 'Ufak bir kasabada küçük bir çocuğun kaybolmasıyla ortaya çıkan gizli deneyler og doğaüstü güçler.', 2016, 50, 34, 8.7, 2100),
+(4, 'Recep İvedik 6', 'Film', 'Recep İvedik, kuru fasulye festivaline gitmek isterken kendini yanlışlıkla Kenya''da bulur.', 2019, 110, 1, 6.5, 800),
+(5, 'Harry Potter', 'Film', 'Hogwarts Cadılık ve Büyücülük Okulu''na kabul edilen genç Harry''nin destansı maceraları.', 2001, 152, 1, 8.5, 5000),
+(6, 'La Casa de Papel', 'Dizi', 'Profesör lakaplı gizemli bir adam, yüzyılın en büyük soygununu yapmak için bir ekip toplar.', 2017, 45, 41, 8.4, 4500),
+(7, 'Yüzüklerin Efendisi', 'Film', 'Karanlık Lord Sauron''un tek yüzüğünü yok etmek için kurulan Yüzük Kardeşliği''nin yolculuğu.', 2001, 178, 1, 8.9, 6000),
+(8, 'Gibi', 'Dizi', 'Yılmaz ve İlkkan, sürekli olarak sıradan hayatlarını altüst edecek absürt olayların içine düşer.', 2021, 35, 40, 8.8, 1200),
+(9, 'Atiye', 'Dizi', 'Genç bir ressam olan Atiye, Göbeklitepe kazısıyla kendi geçmişi arasındaki mistik bağı keşfeder.', 2019, 45, 24, 7.8, 900),
+(10, 'Death Note', 'Dizi', 'Lise öğrencisi Light Yagami, doğaüstü bir defter bulur ve adaleti sağlamaya karar verir.', 2006, 24, 37, 8.9, 2800),
+(11, 'The Matrix', 'Film', 'Bir hacker, yaşadığı dünyanın aslında bir simülasyon olduğunu keşfeder.', 1999, 136, 1, 8.7, 5200),
+(12, 'Interstellar', 'Film', 'Bir grup astronot, insanlık için yeni bir yuva bulmak üzere uzay yolculuğuna çıkar.', 2014, 169, 1, 8.6, 4800),
+(13, 'The Office', 'Dizi', 'Bir kağıt şirketindeki ofis çalışanlarının komik, tuhaf ve absürt günlük yaşamları.', 2005, 22, 201, 8.9, 6500),
+(14, 'The Dark Knight', 'Film', 'Batman, Gotham şehrini kaosa sürükleyen zeki ve acımasız Joker ile yüzleşir.', 2008, 152, 1, 9.0, 8000),
+(15, 'Friends', 'Dizi', 'New York''ta yaşayan 6 yakın arkadaşın hayatı, aşkları ve komik maceraları.', 1994, 22, 236, 8.9, 9000),
+(16, 'Esaretin Bedeli', 'Film', 'Haksız yere hapse atılan bir adamın yıllar süren umut dolu hikayesi.', 1994, 142, 1, 9.3, 10000),
+(17, 'Gladyatör', 'Film', 'İhanete uğrayan bir Romalı general, intikam almak için gladyatör olarak döner.', 2000, 155, 1, 8.5, 4200),
+(18, 'Steins;Gate', 'Dizi', 'Rintarou Okabe, geçmişe mesaj gönderebilen bir zaman makinesi icat eder.', 2011, 24, 24, 9.1, 8500),
+(19, 'Fullmetal Alchemist', 'Dizi', 'İki kardeş, kaybettikleri bedenlerini geri almak için Felsefe Taşı''nı arar.', 2009, 24, 64, 9.1, 9500),
+(20, 'Code Geass', 'Dizi', 'Sürgündeki bir prens, mutlak itaat ettirebilme gücü olan Geass''ı elde eder.', 2006, 24, 50, 8.9, 8200),
+(21, 'Fight Club', 'Film', 'Uykusuzluk çeken bir ofis çalışanı, gizli bir yeraltı dövüş kulübü kurar.', 1999, 139, 1, 8.8, 8500),
+(22, 'Prison Break', 'Dizi', 'Zeki bir mühendis, abisini hapishaneden kaçırmak için kusursuz bir plan yapar.', 2005, 42, 90, 8.3, 9200),
+(23, 'The Witcher', 'Dizi', 'Mutasyona uğramış bir canavar avcısı olan Geralt''ın fantastik dünyadaki mücadelesi.', 2019, 60, 24, 8.0, 7500),
+(24, 'Dark', 'Dizi', 'Kayıp iki çocuk, dört ailenin sırlarını ve zaman yolculuğunu içeren ağı ortaya çıkarır.', 2017, 60, 26, 8.7, 6400);
+
+INSERT IGNORE INTO ProgramTur (program_id, tur_id) VALUES 
+(1, 7), (2, 2), (3, 2), (4, 4), (5, 2), (6, 1), (7, 1), (8, 4), (9, 7), (10, 8),
+(11, 2), (12, 2), (13, 4), (14, 1), (15, 4), (16, 7), (17, 1), (18, 8), (19, 8), (20, 8),
+(21, 7), (22, 1), (23, 2), (24, 2);
